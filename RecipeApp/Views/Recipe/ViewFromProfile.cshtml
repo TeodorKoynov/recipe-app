@@ -1,0 +1,147 @@
+﻿@model RecipeViewModel
+@{
+    int i = 1;
+}
+
+<div>
+    <h1>@Model.Name</h1>
+    @if (Model.PhotoName == null)
+    {
+        <img src="~/images/recipeImages/empty.png" width="200" height="200" asp-append-version="true" />
+    }
+    else
+    {
+        <img src="~/images/recipeImages/@Model.PhotoName" width="200" height="200" asp-append-version="true" />
+    }
+    <div>
+        @if (Model.IsEditable)
+        {
+            <a class="btn btn-info" asp-controller="Recipe" asp-action="EditRecipe" asp-route-id="@Model.RecipeId">Edit</a>
+            <a class="btn btn-danger" asp-controller="Recipe" asp-action="Delete" asp-route-id="@Model.RecipeId">Delete</a>
+        }
+    </div>
+    <hr />
+    <p>@Model.Method</p>
+    <div class="form-group">
+        <table class="table table-hover table-responsive">
+            <thead class="table-sm">
+                <tr>
+                    <td>Name</td>
+                    <td>Quantity</td>
+                    <td>Unit</td>
+                    <td></td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Ingredient ingredient in Model.Ingredients)
+                {
+                    <tr>
+                        @if (Model.IsEditable)
+                        {
+                            <td><a asp-controller="Recipe" asp-action="EditIngredient" asp-route-ingredientId="@ingredient.IngredientId" asp-route-recipeId="@ingredient.RecipeId">✎</a>@ingredient.Name</td>
+                        }
+                        <td>@ingredient.Quantity</td>
+                        <td>@ingredient.Unit</td>
+                        <td>
+                            @if (Model.IsEditable)
+                            {
+                                <a asp-controller="Recipe" asp-action="DeleteIngredient" asp-route-ingredientId="@ingredient.IngredientId" asp-route-recipeId="@Model.RecipeId">Delete</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td></td>
+                    <td class="text-center">
+                        @if (Model.IsEditable)
+                        {
+                            <a asp-controller="Recipe" asp-action="AddIngredient" asp-route-recipeId="@Model.RecipeId" class="btn btn-success btn-sm">Add Ingredient</a>
+                        }
+                    </td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="">
+        <a asp-controller="Manage" asp-action="ViewProfile" asp-route-userId="@Model.OwnerId" class="btn btn-outline-secondary">Back</a>
+    </div>
+    <hr />
+    <div>
+        <h4>Directions</h4>
+        <div>
+            <div class="form-group">
+                @foreach (Step step in Model.Steps)
+                {
+                    <h3>Step @i</h3>
+                    <ul>
+                        @if (Model.IsEditable)
+                        {
+                            <a asp-controller="Recipe" asp-action="EditStep" asp-route-stepId="@step.StepId" asp-route-recipeId="@step.RecipeId">✎</a>
+                        }
+
+                        @step.Instructions
+
+                        @if (Model.IsEditable)
+                        {
+
+                            <a asp-controller="Recipe" asp-action="DeleteStep" asp-route-stepId="@step.StepId" asp-route-recipeId="@Model.RecipeId">Delete</a>
+                        }
+                    </ul>
+                    i++;
+                }
+                <div>
+                    @if (Model.IsEditable)
+                    {
+                        <a asp-controller="Recipe" asp-action="AddStep" asp-route-recipeId="@Model.RecipeId" class="btn btn-success btn-sm">Add Step</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr />
+    <div class="container">
+        <h3>Comments:</h3>
+        <div class="container">
+            <form asp-controller="Recipe" asp-action="ViewFromProfile" asp-route-recipeId="@Model.RecipeId" method="post" enctype="multipart/form-data">
+                <div>
+                    <label asp-for="@Model.Comment.Message"></label>
+                    <input asp-for="@Model.Comment.Message" />
+                    <span class="text-danger"></span>
+                </div>
+                <div>
+                    <button class="btn btn-success" type="submit">Post</button>
+                </div>
+                @if (Model.Comments == null)
+                {
+                    <div>0 Comments</div>
+                }
+                else
+                {
+                    <div>
+                        @foreach (Comment comment in Model.Comments)
+                        {
+                            <div>
+                                @if (comment.WriterPhoto == null)
+                                {
+                                    <img src="~/images/ownersImages/unknown.jpg" width="20" height="20" asp-append-version="true" />
+                                }
+                                else
+                                {
+                                    <img src="~/images/ownersImages/@comment.WriterPhoto" width="20" height="20" asp-append-version="true" />
+                                }
+                                <a asp-controller="Manage" asp-action="ViewProfile" asp-route-userId="@comment.WriterId">@comment.WriterUsername</a>
+                                <h4>@comment.Message</h4>
+                            </div>
+                        }
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+</div>
+
+

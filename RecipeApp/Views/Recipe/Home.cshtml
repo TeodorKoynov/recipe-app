@@ -1,0 +1,41 @@
+﻿@model HomeViewModel
+    @{
+        ViewData["Title"] = "Home Page";
+    }
+
+    <h3>Home Page</h3>
+    <div class="container">
+        <form method="post" asp-controller="Recipe" asp-action="Home">
+            <div class="form-group row">
+                <label asp-for="@Model.SearchWord"></label>
+                <div class="col-sm-10">
+                    <input asp-for="@Model.SearchWord">
+                    <span class="text-danger" asp-validation-for="@Model.SearchWord"></span>
+                </div>
+            </div>
+            <button class="btn btn-success" type="submit">Search</button>
+        </form>
+
+        <table class="table table-hover">
+            <thead class="table-sm">
+                <tr class="font-weight-bold">
+                    <td>Recipe</td>
+                    <td>TimeToCook</td>
+                    <td></td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Recipe recipe in Model.recipes)
+                {
+                    <tr>
+                        <td>@recipe.Name</td>
+                        <td>@recipe.TimeToCook</td>
+                        <td><a asp-controller="Recipe" asp-action="ViewFromHome" asp-route-recipeId="@recipe.RecipeId">View</a></td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <p>Total results: @Model.recipes.Count()</p>
+            </tfoot>
+        </table>
+    </div>

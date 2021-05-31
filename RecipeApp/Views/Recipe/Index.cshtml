@@ -1,0 +1,29 @@
+﻿@model IEnumerable<Recipe>
+@{
+    ViewData["Title"] = "My Recipes";
+}
+
+<div class="container">
+    <table class="table table-hover">
+        <thead class="table-sm">
+            <tr class="font-weight-bold">
+                <td>Recipe</td>
+                <td>TimeToCook</td>
+                <td></td>
+            </tr>
+        </thead>
+        <tbody>
+           @foreach (Recipe recipe in Model)
+           {
+               <tr>
+                   <td>@recipe.Name</td>
+                   <td>@recipe.TimeToCook</td>
+                   <td><a asp-controller="Recipe" asp-action="View" asp-route-id="@recipe.RecipeId">View</a></td>
+               </tr>
+           }
+        </tbody>
+        <tfoot>
+        </tfoot>
+    </table>
+    <a class="btn btn-block btn-outline-success" asp-controller="Recipe" asp-action="Create">Create new Recipe</a>
+</div>

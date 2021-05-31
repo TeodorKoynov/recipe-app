@@ -1,0 +1,39 @@
+﻿@model LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div>
+    <h1>Login</h1>
+</div>
+<form method="post" asp-controller="Account" asp-action="Login">
+    <div class="form-group">
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label" asp-for="@Model.Email"></label>
+            <div class="col-sm-10">
+                <input asp-for="@Model.Email" />
+                <span class="text-danger" asp-validation-for="@Model.Email"></span>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label" asp-for="@Model.Password"></label>
+            <div class="col-sm-10">
+                <input asp-for="@Model.Password" />
+                <span class="text-danger" asp-validation-for="@Model.Password"></span>
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="custom-checkbox custom-control">
+                <input class="custom-control-input" asp-for="@Model.RememberMe" type="checkbox" />
+                <label class="custom-control-label" asp-for="@Model.RememberMe">@Html.DisplayNameFor(m => m.RememberMe)</label>
+            </div>
+        </div>
+    </div>
+    <div class="text-danger" asp-validation-summary="All"></div>
+    <a class="btn-link" asp-controller="Account" asp-action="Register">Don't have an accout - Register</a>
+    <div class="form-group">
+        <div class="col-md-2 col-md-10">
+            <button class="btn" type="submit">Login</button>
+        </div>
+    </div>
+</form>

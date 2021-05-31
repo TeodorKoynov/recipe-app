@@ -1,0 +1,21 @@
+﻿@model EditStepViewModel
+
+<form asp-controller="Recipe" asp-action="EditStep" asp-route-recipeId="@Model.RecipeId" asp-route-stepId="@Model.StepId" method="post">
+    <div class="container">
+        <h1>Edit Step</h1>
+        <div class="form-group">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label" asp-for="@Model.Step.Instructions"></label>
+                <div class="col-sm-10">
+                    <input asp-for="@Model.Step.Instructions" />
+                    <span class="text-danger" asp-validation-for="@Model.Step.Instructions"></span>
+                </div>
+            </div>
+        <div class="form-group">
+            <div class="col-md-2 col-md-10">
+                <button class="btn btn-success" type="submit">Save</button>
+                <a class="btn btn-outline-dark" asp-controller="Recipe" asp-action="View" asp-route-id="@Model.RecipeId">Back</a>
+            </div>
+        </div>
+    </div>
+</form>

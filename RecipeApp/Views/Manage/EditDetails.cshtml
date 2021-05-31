@@ -1,0 +1,32 @@
+﻿@model AccountDetailsViewModel
+
+<div class="container">
+    <h1>Account Details</h1>
+    <form asp-controller="Manage" asp-action="EditDetails" method="post" enctype="multipart/form-data">
+        <div>
+            <label asp-for="@Model.Username"></label>
+            <input asp-for="@Model.Username" />
+            <span asp-validation-for="@Model.Username"></span>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label" asp-for="@Model.Image"></label>
+            <div class="custom-file col-sm-4">
+                <input type="file" class="form-control custom-file-input" asp-for="@Model.Image" />
+                <label class="custom-file-label" asp-for="@Model.Image">Choose file</label>
+            </div>
+            <span class="text-danger" asp-validation-for="@Model.Image"></span>
+        </div>
+        <div>
+            <button type="submit">Save</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(".custom-file-input").on("change", function () {
+            var fileName = $(this).val().split("\\").pop();
+            $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        });
+    </script>
+}

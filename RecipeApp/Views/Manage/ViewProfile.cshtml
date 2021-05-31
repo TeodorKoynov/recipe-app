@@ -1,0 +1,37 @@
+﻿@model ViewProfileViewModel
+
+    <div class="container">
+        <h1>Account Details</h1>
+
+        <div>
+            <h3>Username: @Model.User.Username</h3>
+            @if (Model.User.Picture == null)
+            {
+                <img src="~/images/ownersImages/unknown.jpg" width="200" height="200" asp-append-version="true" />
+            }
+            else
+            {
+                <img src="~/images/ownersImages/@Model.User.Picture" width="200" height="200" asp-append-version="true" />
+            }
+        </div>
+        @if (Model.OwnProfile)
+        {
+            <a class="btn-success" asp-controller="Manage" asp-action="EditDetails">Edit</a>
+        }
+    <div>
+        <table>
+            <thead></thead>
+            <tbody>
+                @foreach (Recipe recipe in Model.UserRecipes)
+                {
+                    <tr>
+                        <td>@recipe.Name</td>
+                        <td>@recipe.TimeToCook</td>
+                        <td><a asp-controller="Recipe" asp-action="ViewFromProfile" asp-route-recipeId="@recipe.RecipeId">View</a></td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot></tfoot>
+        </table>
+    </div>
+    </div>

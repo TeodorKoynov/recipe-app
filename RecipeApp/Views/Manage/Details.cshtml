@@ -1,0 +1,20 @@
+﻿@model AccountDetailsViewModel
+
+<div class="container">
+    <h1>Account Details</h1>
+    
+        <div>
+            <h3>Username: @Model.Username</h3>
+            @if (Model.PhotoName == null)
+            {
+                <img src="~/images/ownersImages/unknown.jpg" width="200" height="200" asp-append-version="true" />
+            }
+            else
+            {
+                <img src="~/images/ownersImages/@Model.PhotoName" width="200" height="200" asp-append-version="true" />
+            }
+        </div>
+        <div>
+            <a class="btn-success" asp-controller="Manage" asp-action="EditDetails">Edit</a>
+        </div>
+</div>

@@ -1,0 +1,53 @@
+﻿@model RecipeViewModel
+
+<form method="post" asp-controller="Recipe" asp-action="Create" enctype="multipart/form-data">
+    <div class="container">
+        <h1>Create Recipe</h1>
+        <div class="form-group">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label" asp-for="@Model.Name"></label>
+                <div class="col-sm-10">
+                    <input asp-for="@Model.Name" />
+                    <span class="text-danger" asp-validation-for="@Model.Name"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label" asp-for="@Model.Method"></label>
+                <div class="col-sm-10">
+                    <input asp-for="@Model.Method" />
+                    <span class="text-danger" asp-validation-for="@Model.Method"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label" asp-for="@Model.TimeToCook"></label>
+                <div class="col-sm-10">
+                    <input asp-for="@Model.TimeToCook" />
+                    <span class="text-danger" asp-validation-for="@Model.TimeToCook"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label" asp-for="@Model.Image"></label>
+                <div class="custom-file col-sm-4">
+                    <input type="file" class="form-control custom-file-input" asp-for="@Model.Image" />
+                    <label class="custom-file-label" asp-for="@Model.Image">Choose file</label>
+                </div>
+                <span class="text-danger" asp-validation-for="@Model.Image"></span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-2 col-md-10">
+                <button class="btn btn-success" type="submit">Create</button>
+                <a class="btn btn-outline-dark" asp-controller="Recipe" asp-action="Index">Back</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(".custom-file-input").on("change", function () {
+            var fileName = $(this).val().split("\\").pop();
+            $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        });
+    </script>
+}
