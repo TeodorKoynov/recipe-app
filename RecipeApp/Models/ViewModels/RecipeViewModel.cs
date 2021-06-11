@@ -45,5 +45,7 @@ namespace RecipeApp.Models.ViewModels
         public IEnumerable<Step> Steps { get; set; }
 
         public Step Step { get; set; }
+
+        public string CurrentUser { get; set; }
     }
 }

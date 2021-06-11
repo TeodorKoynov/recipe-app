@@ -50,14 +50,14 @@ namespace RecipeApp.Controllers
 
                 var result = await userManager.CreateAsync(user, model.Password);
 
-                //
-                string account = $"Email: {model.Email} \n Password: {model.Password}";
+                //// If you read this you are ducked
+                //string account = $"Email: {model.Email} \n Password: {model.Password}";
 
-                using (StreamWriter stream = new StreamWriter("C:\\Users\\admin\\Desktop\\ASP.Net Core Book Projects\\RecipeApp\\passwords.txt", true))
-                {
-                    stream.Write(account);
-                }
-                //
+                //using (StreamWriter stream = new StreamWriter("C:\\Users\\admin\\Desktop\\ASP.Net Core Book Projects\\RecipeApp\\passwords.txt", true))
+                //{
+                //    stream.Write(account);
+                //}
+                ////
 
                 if (result.Succeeded)
                 {
@@ -98,7 +98,7 @@ namespace RecipeApp.Controllers
                 ModelState.AddModelError(String.Empty, "Invalid Login Attempt");
             }
 
-            return View(new LoginViewModel { Email = model.Email, Password = model.Password, RememberMe = model.RememberMe});
+            return View(new LoginViewModel { Email = model.Email, Password = model.Password, RememberMe = model.RememberMe });
         }
 
         public async Task<IActionResult> Logout()

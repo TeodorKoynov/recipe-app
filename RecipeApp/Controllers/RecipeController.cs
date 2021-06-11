@@ -57,9 +57,14 @@ namespace RecipeApp.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> View(int id)
+        public async Task<IActionResult> View(int recipeId)
         {
-            Recipe recipe = recipeRepository.FindRecipeById(id);
+            Recipe recipe = recipeRepository.FindRecipeById(recipeId);
+
+            if (recipe == null)
+            {
+                return View("Error", new ErrorViewModel() { RequestId = "404" });
+            }
 
             UpdateComments(recipe);
 
@@ -78,7 +83,8 @@ namespace RecipeApp.Controllers
                 ReturnToHome = true,
                 Comments = recipe.Comments,
                 OwnerId = recipe.OwnerId,
-                Steps = recipe.Steps
+                Steps = recipe.Steps,
+                CurrentUser = userManager.GetUserId(User)
             };
 
             return View(model);
@@ -88,6 +94,11 @@ namespace RecipeApp.Controllers
         public async Task<IActionResult> View(RecipeBindingModel bindingModel, int recipeId)
         {
             Recipe recipe = recipeRepository.FindRecipeById(recipeId);
+
+            if (recipe == null)
+            {
+                return View("Error", new ErrorViewModel() { RequestId = "404" });
+            }
 
             var authResult = await authorizationService.AuthorizeAsync(User, recipe, "CanManageReicpe");
 
@@ -175,7 +186,8 @@ namespace RecipeApp.Controllers
                 Ingredients = recipeToEdit.Ingredients,
                 Method = recipeToEdit.Method,
                 TimeToCook = recipeToEdit.TimeToCook,
-                PhotoName = recipeToEdit.Picture
+                PhotoName = recipeToEdit.Picture,
+                OwnerId = recipeToEdit.OwnerId
             };
 
             return View(model);
@@ -187,22 +199,22 @@ namespace RecipeApp.Controllers
             if (!ModelState.IsValid)
             {
                 return View(new RecipeViewModel { Name = bindingModel.Name, Method = bindingModel.Method, TimeToCook = bindingModel.TimeToCook, RecipeId = bindingModel.RecipeId, Image = bindingModel.Image, PhotoName = bindingModel.PhotoName });
-            }
+            } 
 
-            string uniqueFileName = UploadedFile(bindingModel);
+            Recipe currentRecipe = recipeRepository.FindRecipeById(recipeId);
 
-            Recipe editedRecipe = new Recipe()
+            currentRecipe.Name = bindingModel.Name;
+            currentRecipe.Method = bindingModel.Method;
+            currentRecipe.TimeToCook = bindingModel.TimeToCook;
+            if (bindingModel.Image != null)
             {
-                RecipeId = recipeId,
-                Name = bindingModel.Name,
-                Method = bindingModel.Method,
-                TimeToCook = bindingModel.TimeToCook,
-                Picture = uniqueFileName
+                string uniqueFileName = UploadedFile(bindingModel);
+                currentRecipe.Picture = uniqueFileName;
             };
 
-            recipeRepository.UpdateRecipe(editedRecipe);
+            recipeRepository.UpdateRecipe(currentRecipe);
 
-            return RedirectToAction("View", new { id = editedRecipe.RecipeId });
+            return RedirectToAction("View", new { id = currentRecipe.RecipeId });
         }
 
         [Authorize]
@@ -238,7 +250,6 @@ namespace RecipeApp.Controllers
 
             OwnerMock owner = recipeRepository.FindOwnerById(userManager.GetUserId(User));
 
-
             recipeRepository.AddRecipe(recipe);
 
             owner.Recipes.Add(recipe);
@@ -251,13 +262,23 @@ namespace RecipeApp.Controllers
         [HttpGet]
         public IActionResult AddStep(int recipeId)
         {
-            AddStepViewModel viewModel = new AddStepViewModel()
-            {
-                Step = new Step { },
-                RecipeId = recipeId
-            };
+            OwnerMock currentUser = recipeRepository.FindOwnerById(userManager.GetUserId(User));
 
-            return View(viewModel);
+            Recipe recipe = currentUser.Recipes
+                .Where(r => r.RecipeId == recipeId)
+                .FirstOrDefault();
+            if (recipe != null)
+            {
+                AddStepViewModel viewModel = new AddStepViewModel()
+                {
+                    Step = new Step { },
+                    RecipeId = recipeId
+                };
+
+                return View(viewModel);
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         [HttpPost]
@@ -268,28 +289,71 @@ namespace RecipeApp.Controllers
                 return View(new AddStepViewModel() { RecipeId = bindingModel.RecipeId, Step = new Step() { Instructions = bindingModel.Step.Instructions, RecipeId = bindingModel.RecipeId } });
             }
 
-            Recipe recipe = recipeRepository.FindRecipeById(bindingModel.RecipeId);
-            recipeRepository.AddStep(bindingModel.Step, recipe);
+            OwnerMock currentUser = recipeRepository.FindOwnerById(userManager.GetUserId(User));
 
-            return RedirectToAction("View", new { id = bindingModel.RecipeId });
+            Recipe recipe = currentUser.Recipes
+                .Where(r => r.RecipeId == bindingModel.RecipeId)
+                .FirstOrDefault();
+            if (recipe != null)
+            {
+                Recipe currentRecipe = recipeRepository.FindRecipeById(recipe.RecipeId);
+
+                recipeRepository.AddStep(bindingModel.Step, currentRecipe);
+                return RedirectToAction("View", new { id = bindingModel.RecipeId });
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         public IActionResult DeleteStep(int stepId, int recipeId)
-
         {
-            recipeRepository.DeleteStep(recipeId, stepId);
+            OwnerMock currentUser = recipeRepository.FindOwnerById(userManager.GetUserId(User));
 
-            return RedirectToAction("View", new { id = recipeId });
+            Recipe recipe = currentUser.Recipes
+                .Where(r => r.RecipeId == recipeId)
+                .FirstOrDefault();
+            if (recipe != null)
+            {
+                Recipe currentRecipe = recipeRepository.FindRecipeById(recipe.RecipeId);
+
+                Step currentStep = currentRecipe.Steps.Where(s => s.StepId == stepId)
+                .FirstOrDefault();
+
+                if (currentStep != null)
+                {
+                    recipeRepository.DeleteStep(recipeId, stepId);
+
+                    return RedirectToAction("View", new { id = recipeId });
+                }
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         [HttpGet]
         public IActionResult EditStep(int recipeId, int stepId)
         {
-            Step step = recipeRepository.FindRecipeById(recipeId).Steps.FirstOrDefault(s => s.StepId == stepId);
+            OwnerMock currentUser = recipeRepository.FindOwnerById(userManager.GetUserId(User));
 
-            EditStepViewModel model = new EditStepViewModel {  Step = step, StepId = stepId, RecipeId = recipeId };
+            Recipe recipe = currentUser.Recipes
+                .Where(r => r.RecipeId == recipeId)
+                .FirstOrDefault();
+            if (recipe != null)
+            {
+                Recipe currentRecipe = recipeRepository.FindRecipeById(recipe.RecipeId);
 
-            return View(model);
+                Step currentStep = currentRecipe.Steps.Where(s => s.StepId == stepId)
+                .FirstOrDefault();
+
+                if (currentStep != null)
+                {
+                    EditStepViewModel model = new EditStepViewModel { Step = currentStep, StepId = stepId, RecipeId = recipeId };
+
+                    return View(model);
+                }
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         [HttpPost]
@@ -297,31 +361,55 @@ namespace RecipeApp.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View(new EditStepViewModel { Step= step, RecipeId = recipeId, StepId = stepId });
+                return View(new EditStepViewModel { Step = step, RecipeId = recipeId, StepId = stepId });
             }
 
-            Step editedStep = new Step
+            OwnerMock currentUser = recipeRepository.FindOwnerById(userManager.GetUserId(User));
+
+            Recipe recipe = currentUser.Recipes
+                .Where(r => r.RecipeId == recipeId)
+                .FirstOrDefault();
+
+            if (recipe != null)
             {
-                StepId = stepId,
-                Instructions = step.Instructions,
-                RecipeId = recipeId
-            };
+                Recipe currentRecipe = recipeRepository.FindRecipeById(recipe.RecipeId);
 
+                Step currentStep = currentRecipe.Steps.Where(s => s.StepId == stepId)
+                .FirstOrDefault();
 
-            recipeRepository.UpdateStep(editedStep);
+                if (currentStep != null)
+                {
+                    currentStep.Instructions = step.Instructions;
 
-            return RedirectToAction("View", new { id = recipeId });
+                    recipeRepository.UpdateStep(currentStep);
+
+                    return RedirectToAction("View", new { id = recipeId });
+                }
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         [HttpGet]
         public IActionResult AddIngredient(int recipeId)
         {
-            AddIngredientViewModel viewModel = new AddIngredientViewModel
+            OwnerMock currentUser = recipeRepository.FindOwnerById(userManager.GetUserId(User));
+
+            Recipe recipe = currentUser.Recipes
+                .Where(r => r.RecipeId == recipeId)
+                .FirstOrDefault();
+
+            if (recipe != null)
             {
-                Ingredient = new Ingredient { },
-                RecipeId = recipeId
-            };
-            return View(viewModel);
+                AddIngredientViewModel viewModel = new AddIngredientViewModel
+                {
+                    Ingredient = new Ingredient { },
+                    RecipeId = recipeId
+                };
+                return View(viewModel);
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         [HttpPost]
@@ -332,27 +420,75 @@ namespace RecipeApp.Controllers
                 return View(new AddIngredientViewModel { Ingredient = new Ingredient() { Name = model.Ingredient.Name, Quantity = model.Ingredient.Quantity, Unit = model.Ingredient.Unit }, RecipeId = model.RecipeId });
             }
 
-            Recipe recipe = recipeRepository.FindRecipeById(model.RecipeId);
-            recipeRepository.AddIngredient(model.Ingredient, recipe);
+            OwnerMock currentUser = recipeRepository.FindOwnerById(userManager.GetUserId(User));
 
-            return RedirectToAction("View", new { id = model.RecipeId });
+            Recipe recipe = currentUser.Recipes
+                .Where(r => r.RecipeId == model.RecipeId)
+                .FirstOrDefault();
+
+            if (recipe != null)
+            {
+                Recipe currentRecipe = recipeRepository.FindRecipeById(recipe.RecipeId);
+                
+                recipeRepository.AddIngredient(model.Ingredient, currentRecipe);
+
+                return RedirectToAction("View", new { id = model.RecipeId });
+
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         public IActionResult DeleteIngredient(int ingredientId, int recipeId)
         {
-            recipeRepository.RemoveIngredient(ingredientId, recipeId);
+            OwnerMock currentUser = recipeRepository.FindOwnerById(userManager.GetUserId(User));
 
-            return RedirectToAction("View", new { id = recipeId });
+            Recipe recipe = currentUser.Recipes
+                .Where(r => r.RecipeId == recipeId)
+                .FirstOrDefault();
+
+            if (recipe != null)
+            {
+                Recipe currentRecipe = recipeRepository.FindRecipeById(recipe.RecipeId);
+
+                Ingredient currentIngredient = currentRecipe.Ingredients.Where(i => i.IngredientId == ingredientId).FirstOrDefault();
+
+                if (currentIngredient != null)
+                {
+                    recipeRepository.RemoveIngredient(ingredientId, recipeId);
+
+                    return RedirectToAction("View", new { id = recipeId });
+                }
+
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         [HttpGet]
         public IActionResult EditIngredient(int recipeId, int ingredientId)
         {
-            Ingredient ingredient = recipeRepository.FindRecipeById(recipeId).Ingredients.FirstOrDefault(i => i.IngredientId == ingredientId);
+            OwnerMock currentUser = recipeRepository.FindOwnerById(userManager.GetUserId(User));
 
-            EditIngredientViewModel model = new EditIngredientViewModel { Ingredient = ingredient, IngredientId = ingredientId, RecipeId = recipeId };
+            Recipe recipe = currentUser.Recipes
+                .Where(r => r.RecipeId == recipeId)
+                .FirstOrDefault();
 
-            return View(model);
+            if (recipe != null)
+            {
+                Recipe currentRecipe = recipeRepository.FindRecipeById(recipe.RecipeId);
+
+                Ingredient currentIngredient = currentRecipe.Ingredients.Where(i => i.IngredientId == ingredientId).FirstOrDefault();
+
+                if (currentIngredient != null)
+                {
+                    EditIngredientViewModel model = new EditIngredientViewModel { Ingredient = currentIngredient, IngredientId = ingredientId, RecipeId = recipeId };
+
+                    return View(model);
+                }
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         [HttpPost]
@@ -362,20 +498,32 @@ namespace RecipeApp.Controllers
             {
                 return View(new EditIngredientViewModel { Ingredient = ingredient, IngredientId = ingredientId, RecipeId = recipeId });
             }
+            
+            OwnerMock currentUser = recipeRepository.FindOwnerById(userManager.GetUserId(User));
 
-            Ingredient editedIngredient = new Ingredient
+            Recipe recipe = currentUser.Recipes
+                .Where(r => r.RecipeId == recipeId)
+                .FirstOrDefault();
+
+            if (recipe != null)
             {
-                IngredientId = ingredientId,
-                Name = ingredient.Name,
-                Quantity = ingredient.Quantity,
-                Unit = ingredient.Unit,
-                RecipeId = recipeId
-            };
+                Recipe currentRecipe = recipeRepository.FindRecipeById(recipe.RecipeId);
 
+                Ingredient currentIngredient = currentRecipe.Ingredients.Where(i => i.IngredientId == ingredientId).FirstOrDefault();
 
-            recipeRepository.UpdateIngredient(editedIngredient);
+                if (currentIngredient != null)
+                {
+                    currentIngredient.Name = ingredient.Name;
+                    currentIngredient.Quantity = ingredient.Quantity;
+                    currentIngredient.Unit = ingredient.Unit;
 
-            return RedirectToAction("View", new { id = recipeId });
+                    recipeRepository.UpdateIngredient(currentIngredient);
+
+                    return RedirectToAction("View", new { id = recipeId });
+                }
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         [HttpGet]
@@ -434,6 +582,11 @@ namespace RecipeApp.Controllers
         {
             Recipe recipe = recipeRepository.FindRecipeById(recipeId);
 
+            if (recipe == null)
+            {
+                return View("Error", new ErrorViewModel() { RequestId = "404" });
+            }
+
             UpdateComments(recipe);
 
             var authResult = await authorizationService.AuthorizeAsync(User, recipe, "CanManageReicpe");
@@ -451,7 +604,8 @@ namespace RecipeApp.Controllers
                 TimeToCook = recipe.TimeToCook,
                 Comments = recipe.Comments,
                 Steps = recipe.Steps,
-                OwnerId = recipe.OwnerId
+                OwnerId = recipe.OwnerId,
+                CurrentUser = userManager.GetUserId(User)
             };
 
             return View(model);
@@ -462,6 +616,11 @@ namespace RecipeApp.Controllers
         public async Task<IActionResult> ViewFromHome(RecipeBindingModel bindingModel, int recipeId)
         {
             Recipe recipe = recipeRepository.FindRecipeById(recipeId);
+
+            if (recipe == null)
+            {
+                return View("Error", new ErrorViewModel() { RequestId = "404" });
+            }
 
             var authResult = await authorizationService.AuthorizeAsync(User, recipe, "CanManageReicpe");
 
@@ -479,7 +638,8 @@ namespace RecipeApp.Controllers
                     PhotoName = recipe.Picture,
                     TimeToCook = recipe.TimeToCook,
                     Comments = recipe.Comments,
-                    Steps = recipe.Steps
+                    Steps = recipe.Steps,
+                    CurrentUser = userManager.GetUserId(User)
                 });
             }
 
@@ -517,7 +677,8 @@ namespace RecipeApp.Controllers
                     Message = ""
                 },
                 OwnerId = recipe.OwnerId,
-                Steps = recipe.Steps
+                Steps = recipe.Steps,
+                CurrentUser = userManager.GetUserId(User)
             };
 
             return View(model);
@@ -527,6 +688,11 @@ namespace RecipeApp.Controllers
         public async Task<ViewResult> ViewFromProfile(int recipeId)
         {
             Recipe recipe = recipeRepository.FindRecipeById(recipeId);
+
+            if (recipe == null)
+            {
+                return View("Error", new ErrorViewModel() { RequestId = "404" });
+            }
 
             UpdateComments(recipe);
 
@@ -544,7 +710,8 @@ namespace RecipeApp.Controllers
                 TimeToCook = recipe.TimeToCook,
                 Comments = recipe.Comments,
                 OwnerId = recipe.OwnerId,
-                Steps = recipe.Steps
+                Steps = recipe.Steps,
+                CurrentUser = userManager.GetUserId(User)
             };
 
             return View(model);
@@ -573,7 +740,8 @@ namespace RecipeApp.Controllers
                     TimeToCook = recipe.TimeToCook,
                     Comments = recipe.Comments,
                     OwnerId = recipe.OwnerId,
-                    Steps = recipe.Steps
+                    Steps = recipe.Steps,
+                    CurrentUser = userManager.GetUserId(User)
                 });
             }
 
@@ -610,18 +778,43 @@ namespace RecipeApp.Controllers
                     Message = ""
                 },
                 OwnerId = recipe.OwnerId,
-                Steps = recipe.Steps
+                Steps = recipe.Steps,
+                CurrentUser = userManager.GetUserId(User)
             };
 
-            return View(model);
+            return RedirectToAction("ViewFromProfile", new { recipeId = model.RecipeId });
+        }
+
+        public IActionResult DeleteComment(int commentId, int recipeId, string redirect)
+        {
+
+            Comment comment = recipeRepository.FindComment(commentId);
+
+            Recipe recipe = recipeRepository.FindRecipeById(recipeId);
+
+            if (comment.WriterId == userManager.GetUserId(User))
+            {
+                recipeRepository.DeleteComent(comment, recipe);
+                return RedirectToAction(redirect, new { recipeId = recipeId});
+
+            }
+
+            return View("Error", new ErrorViewModel() { RequestId = "404" });
         }
 
         private void UpdateComments(Recipe recipe)
         {
-            foreach (Comment oldComment in recipe.Comments)
+            if(recipe != null)
             {
-                oldComment.WriterPhoto = recipeRepository.FindOwnerById(oldComment.WriterId).Picture;
-                oldComment.WriterUsername = recipeRepository.FindOwnerById(oldComment.WriterId).Username;
+                foreach (Comment oldComment in recipe.Comments)
+                {
+                    oldComment.WriterPhoto = recipeRepository.FindOwnerById(oldComment.WriterId).Picture;
+                    oldComment.WriterUsername = recipeRepository.FindOwnerById(oldComment.WriterId).Username;
+                }
+            } 
+            else
+            {
+                return;
             }
         }
 

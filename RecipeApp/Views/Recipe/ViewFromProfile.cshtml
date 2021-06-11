@@ -124,6 +124,10 @@
                     <div>
                         @foreach (Comment comment in Model.Comments)
                         {
+                            if (comment.WriterId == Model.CurrentUser)
+                            {
+                                <a asp-controller="Recipe" asp-action="DeleteComment" asp-route-commentId="@comment.CommentId" asp-route-recipeId="@comment.RecipeId" asp-route-redirect="ViewFromProfile">Delete</a>
+                            }
                             <div>
                                 @if (comment.WriterPhoto == null)
                                 {

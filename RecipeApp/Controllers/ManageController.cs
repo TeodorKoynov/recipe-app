@@ -90,11 +90,12 @@ namespace RecipeApp.Controllers
 
                 string uploadsFolder = Path.Combine(webHostEnvironment.WebRootPath, "images", "recipeImages");
 
-                string FileName = owner.Picture;
-
-                string filePath = Path.Combine(uploadsFolder, FileName);
-
-                System.IO.File.Delete(filePath);
+                string oldPicture = owner.Picture;
+                if (oldPicture != null)
+                {
+                    string filePath = Path.Combine(uploadsFolder, oldPicture);
+                    System.IO.File.Delete(filePath);
+                }
 
                 owner.Username = model.Username;
                 owner.Picture = uniqueFileName;

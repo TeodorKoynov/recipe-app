@@ -121,23 +121,28 @@
                     }
                     else
                     {
+                <div>
+                    @foreach (Comment comment in Model.Comments)
+                    {
+                        if (comment.WriterId == Model.CurrentUser)
+                        {
+                            <a asp-controller="Recipe" asp-action="DeleteComment" asp-route-commentId="@comment.CommentId" asp-route-recipeId="@comment.RecipeId" asp-route-redirect="ViewFromHome">Delete</a>
+
+                        }
                         <div>
-                            @foreach (Comment comment in Model.Comments)
+                            @if (comment.WriterPhoto == null)
                             {
-                                <div>
-                                    @if (comment.WriterPhoto == null)
-                                    {
-                                        <img src="~/images/ownersImages/unknown.jpg" width="20" height="20" asp-append-version="true" />
-                                    }
-                                    else
-                                    {
-                                        <img src="~/images/ownersImages/@comment.WriterPhoto" width="20" height="20" asp-append-version="true" />
-                                    }
-                                    <a asp-controller="Manage" asp-action="ViewProfile" asp-route-userId="@comment.WriterId">@comment.WriterUsername</a>
-                                    <h4>@comment.Message</h4>
-                                </div>
+                                <img src="~/images/ownersImages/unknown.jpg" width="20" height="20" asp-append-version="true" />
                             }
+                            else
+                            {
+                                <img src="~/images/ownersImages/@comment.WriterPhoto" width="20" height="20" asp-append-version="true" />
+                            }
+                            <a asp-controller="Manage" asp-action="ViewProfile" asp-route-userId="@comment.WriterId">@comment.WriterUsername</a>
+                            <h4>@comment.Message</h4>
                         </div>
+                    }
+                </div>
                     }
                 </form>
             </div>

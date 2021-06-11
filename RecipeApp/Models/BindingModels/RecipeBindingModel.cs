@@ -38,7 +38,9 @@ namespace RecipeApp.Models.BindingModels
 
         public IEnumerable<Comment> Comments { get; set; }
 
-        public Comment Comment { get; set; }
+        public string OwnerId { get; set; }
 
+        public Comment Comment { get; set; }
+        public ICollection<Step> Steps { get; set; } 
     }
 }

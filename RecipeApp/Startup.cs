@@ -34,7 +34,14 @@ namespace RecipeApp
             services.AddControllersWithViews();
             services.AddScoped<IRecipeRepository, RecipeRepository>();
             services.AddDbContext<RecipeDbContext>(options => options.UseMySql("Server=127.0.0.1;Database=recipe_db;Uid=root;Pwd=root"));
-            services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<RecipeDbContext>().AddDefaultTokenProviders();
+            services.AddIdentity<AppUser, IdentityRole>(identity => 
+                {
+                    identity.Password.RequireDigit = false;
+                    identity.Password.RequireNonAlphanumeric = false;
+                    identity.Password.RequireUppercase = false;
+                    identity.Password.RequireLowercase = false;
+                })
+                .AddEntityFrameworkStores<RecipeDbContext>().AddDefaultTokenProviders();
             services.AddScoped<IAuthorizationHandler, IsRecipeOwnerHandler>();
             services.ConfigureApplicationCookie(options =>
             {

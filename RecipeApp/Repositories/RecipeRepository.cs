@@ -123,7 +123,7 @@ namespace RecipeApp.Repositories
 
         public OwnerMock FindOwnerById(string ownerId)
         {
-            OwnerMock owner = context.Owners.FirstOrDefault(o => o.OwnerId == ownerId);
+            OwnerMock owner = context.Owners.Include(o => o.Recipes).FirstOrDefault(o => o.OwnerId == ownerId);
 
             return owner;
         }

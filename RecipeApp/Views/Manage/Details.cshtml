@@ -7,11 +7,11 @@
             <h3>Username: @Model.Username</h3>
             @if (Model.PhotoName == null)
             {
-                <img src="~/images/ownersImages/unknown.jpg" width="200" height="200" asp-append-version="true" />
+                <img src="~/images/ownersImages/unknown.jpg" width="200" height="200" style="object-fit: cover" asp-append-version="true" />
             }
             else
             {
-                <img src="~/images/ownersImages/@Model.PhotoName" width="200" height="200" asp-append-version="true" />
+                <img src="~/images/ownersImages/@Model.PhotoName" width="200" height="200" style="object-fit: cover" asp-append-version="true" />
             }
         </div>
         <div>
